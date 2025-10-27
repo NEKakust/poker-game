@@ -13,4 +13,4 @@ public:
     [[nodiscard]] std::string getSuit() const;
 };
 
-#endif //POKER_CARD_H
+#endif

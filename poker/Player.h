@@ -27,5 +27,4 @@ public:
     void printStats(const std::string& filename) const;
 };
 
-
-#endif //POKER_PLAYER_H
+#endif

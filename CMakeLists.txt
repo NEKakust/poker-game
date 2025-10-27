@@ -22,7 +22,6 @@ set(SOURCES
     poker/HandEvaluator.cpp
     poker/Result.cpp
     poker/StateManager.cpp
-    poker/Timer.cpp
     poker/Wallet.cpp
 )
 
@@ -39,7 +38,6 @@ set(HEADERS
     poker/HandEvaluator.h
     poker/Result.h
     poker/StateManager.h
-    poker/Timer.h
     poker/Wallet.h
 )
 

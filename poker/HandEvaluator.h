@@ -22,15 +22,13 @@ struct HandEvaluation {
     HandRank rank;
     std::string handName;
     int rankValue;
-    std::vector<int> kickers; // For tie-breaking
+    std::vector<int> kickers;
 };
 
 class HandEvaluator {
 public:
-    // Main evaluation method
     static HandEvaluation evaluateHand(const std::vector<Card>& hand);
     
-    // Individual hand type checks
     static bool isRoyalFlush(const std::vector<Card>& hand);
     static bool isStraightFlush(const std::vector<Card>& hand);
     static bool isFourOfAKind(const std::vector<Card>& hand);
@@ -41,16 +39,13 @@ public:
     static bool isTwoPair(const std::vector<Card>& hand);
     static bool isOnePair(const std::vector<Card>& hand);
     
-    // Utility methods
     static int getRankValue(const std::string& rank);
     static std::string getHandName(HandRank rank);
     static std::vector<int> getKickers(const std::vector<Card>& hand, HandRank rank);
     
-    // Comparison methods
     static int compareHands(const std::vector<Card>& hand1, const std::vector<Card>& hand2);
     static bool isHandBetter(const std::vector<Card>& hand1, const std::vector<Card>& hand2);
     
-    // Helper methods
     static std::vector<int> getRankCounts(const std::vector<Card>& hand);
     static std::vector<int> getSuitCounts(const std::vector<Card>& hand);
     static std::vector<int> getSortedRanks(const std::vector<Card>& hand);
@@ -60,4 +55,4 @@ private:
     static const std::vector<std::string> HAND_NAMES;
 };
 
-#endif //POKER_HANDEVALUATOR_H
+#endif

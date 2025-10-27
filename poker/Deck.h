@@ -19,4 +19,4 @@ public:
 
 };
 
-#endif //POKER_DECK_H
+#endif

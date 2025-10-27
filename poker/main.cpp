@@ -15,7 +15,6 @@
 #include "PokerGame.h"
 #include "StateManager.h"
 #include "Wallet.h"
-#include "Timer.h"
 #include "HandEvaluator.h"
 
 using namespace std;
@@ -26,7 +25,6 @@ private:
     shared_ptr<Player> humanPlayer;
     shared_ptr<BotPlayer> botPlayer;
     Wallet playerWallet;
-    Timer gameTimer;
     bool gameRunning;
     Deck gameDeck;
     GameBoard gameBoard;
@@ -73,15 +71,6 @@ PokerGameManager::PokerGameManager() : gameRunning(false), currentBetAmount(0), 
     stateManager = StateManager();
     playerWallet = Wallet("Player", 1000);
     
-    // Set up timer callback
-    gameTimer.setOnExpireCallback([this]() {
-        cout << "\nTime's up! Auto-folding..." << endl;
-        if (humanPlayer) {
-            stateManager.playerFold(humanPlayer->getName());
-        }
-    });
-    
-    // Initialize game deck and shuffle
     gameDeck.shuffle();
 }
 

@@ -45,7 +45,6 @@ GameSession* StateManager::createNewSession() {
     session.gameBoard = std::make_shared<GameBoard>();
     session.bank = std::make_shared<Bank>();
     session.result = std::make_shared<Result>();
-    session.timer = std::make_shared<Timer>();
     session.betHistory = std::make_shared<BetHistory>();
     
     gameSessions.push_back(session);
@@ -646,18 +645,6 @@ bool StateManager::isValidSession(const std::string& sessionId) const {
 
 size_t StateManager::getSessionCount() const {
     return gameSessions.size();
-}
-
-void StateManager::onTimerExpired() {
-    if (currentSession && currentSession->timer) {
-        // Handle timer expiration
-        std::string currentPlayer = getCurrentPlayerName();
-        if (!currentPlayer.empty()) {
-            // Auto-fold current player
-            playerFold(currentPlayer);
-            nextPlayer();
-        }
-    }
 }
 
 void StateManager::onPlayerDisconnect(const std::string& playerName) {

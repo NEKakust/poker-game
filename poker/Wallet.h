@@ -48,30 +48,25 @@ public:
     Wallet(const std::string& owner, int initialBalance = 1000);
     Wallet(const std::string& owner, int initialBalance, const std::string& file);
     
-    // Balance management
     bool deposit(int amount, const std::string& description = "Deposit");
     bool withdraw(int amount, const std::string& description = "Withdrawal");
     bool canAfford(int amount) const;
     int getBalance() const;
     void setBalance(int amount);
     
-    // Betting operations
     bool placeBet(int amount, const std::string& gameId = "");
     void winBet(int amount, const std::string& gameId = "");
     void loseBet(int amount, const std::string& gameId = "");
     void refundBet(int amount, const std::string& gameId = "");
     
-    // Bonus and rewards
     void addBonus(int amount, const std::string& reason = "Bonus");
     
-    // Limits and constraints
     void setMaxBalance(int max);
     void setMinBalance(int min);
     int getMaxBalance() const;
     int getMinBalance() const;
     bool isWithinLimits(int amount) const;
     
-    // Transaction history
     std::vector<Transaction> getTransactionHistory() const;
     std::vector<Transaction> getTransactionsByType(TransactionType type) const;
     std::vector<Transaction> getRecentTransactions(int count = 10) const;
@@ -80,13 +75,11 @@ public:
     int getTotalWinnings() const;
     int getTotalLosses() const;
     
-    // Statistics
     double getWinRate() const;
     int getNetProfit() const;
     std::map<std::string, int> getDailyStats() const;
     std::map<std::string, int> getMonthlyStats() const;
     
-    // File operations
     void saveToFile() const;
     void saveToFile(const std::string& file) const;
     void loadFromFile();
@@ -94,26 +87,22 @@ public:
     void setAutoSave(bool enable);
     void setFilename(const std::string& file);
     
-    // Display methods
     void displayBalance() const;
     void displayTransactionHistory() const;
     void displayRecentTransactions(int count = 10) const;
     void displayStatistics() const;
     void displaySummary() const;
     
-    // Export methods
     void exportToCSV(const std::string& filename) const;
     void exportTransactionsToCSV(const std::string& filename) const;
     
-    // Utility methods
     void clearHistory();
     size_t getTransactionCount() const;
     bool isEmpty() const;
     void reset();
     
-    // Owner management
     void setOwner(const std::string& name);
     std::string getOwner() const;
 };
 
-#endif //POKER_WALLET_H
+#endif

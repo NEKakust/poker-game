@@ -47,5 +47,5 @@ public:
     void reset();
 };
 
-#endif // RESULT_H
+#endif
 

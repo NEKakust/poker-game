@@ -56,4 +56,4 @@ public:
     [[nodiscard]] int getWinner() const;
 };
 
-#endif //POKER_POKERGAME_H
+#endif

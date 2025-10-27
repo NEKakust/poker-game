@@ -29,13 +29,11 @@ public:
     GameBoard();
     GameBoard(int smallBlindAmount, int bigBlindAmount);
     
-    // Game phase management
     void setPhase(GamePhase phase);
     GamePhase getCurrentPhase() const;
     void advancePhase();
     std::string getPhaseString() const;
     
-    // Community cards management
     void addCommunityCard(const Card& card);
     void addFlopCards(const std::vector<Card>& cards);
     void addTurnCard(const Card& card);
@@ -43,20 +41,17 @@ public:
     std::vector<Card> getCommunityCards() const;
     void clearCommunityCards();
     
-    // Pot management
     void addToPot(int amount);
     void setPotAmount(int amount);
     int getPotAmount() const;
     void resetPot();
     
-    // Betting management
     void setCurrentBet(int bet);
     int getCurrentBet() const;
     void setBlinds(int small, int big);
     int getSmallBlind() const;
     int getBigBlind() const;
     
-    // Player management
     void addPlayer(Player* player);
     void removePlayer(Player* player);
     std::vector<Player*> getPlayers() const;
@@ -66,14 +61,12 @@ public:
     void setDealerPosition(int position);
     int getDealerPosition() const;
     
-    // Display methods
     void displayBoard() const;
     void displayCommunityCards() const;
     void displayPot() const;
     
-    // Utility methods
     void resetBoard();
     bool isGameComplete() const;
 };
 
-#endif //POKER_GAMEBOARD_H
+#endif
