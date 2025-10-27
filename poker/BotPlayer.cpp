@@ -92,104 +92,48 @@ BotDecision BotPlayer::makeDecision(const std::vector<Card>& communityCards,
     
     // Make decision based on difficulty and personality
     switch (difficulty) {
-        case BotDifficulty::EASY:
-            // Очень агрессивная и рискованная игра
-            if (handStrength > 0.5) {
-                // Рейз даже при средних руках
+        case BotDifficulty::EASY: {
+            // БОТ НИКОГДА НЕ СБРАСЫВАЕТ - ВСЕГДА ИГРАЕТ ДО КОНЦА
+            // Делаем рейз даже при слабых руках - агрессивная игра
+            if (handStrength > 0.1) { // Снижаем порог с 0.3 до 0.1
+                // Почти всегда рейз
                 decision.action = BotAction::RAISE;
                 decision.amount = calculateRaiseAmount(handStrength, potAmount);
-                decision.reasoning = "Рискну с такой рукой, рейз!";
-            } else if (handStrength > 0.25) {
-                // Колл при слабых руках
+                decision.reasoning = "РЕЙЗ! Иду до победы!";
+            } else {
+                // Только очень слабые руки - колл
                 decision.action = BotAction::CALL;
                 decision.amount = currentBet;
-                decision.reasoning = "Попробую рискнуть с такой рукой";
-            } else if (handStrength > 0.1) {
-                // Блеф при очень слабых руках
-                if (shouldBluff(handStrength, potOdds)) {
-                    decision.action = BotAction::RAISE;
-                    decision.amount = calculateRaiseAmount(handStrength, potAmount);
-                    decision.reasoning = "Блеф! Риск-бизнес!";
-                } else {
-                    decision.action = BotAction::CALL;
-                    decision.amount = currentBet;
-                    decision.reasoning = "Рискую посмотреть следующие карты";
-                }
-            } else {
-                // Сброс только при совсем слабых руках
-                decision.action = BotAction::FOLD;
-                decision.amount = 0;
-                decision.reasoning = "Слишком слабая рука";
+                decision.reasoning = "КОЛЛ! Никогда не сдаюсь!";
+            }
             }
             break;
             
-        case BotDifficulty::MEDIUM:
-            // More sophisticated decision making
-            if (handStrength > 0.8) {
+        case BotDifficulty::MEDIUM: {
+            // NO FOLDING - always play
+            if (handStrength > 0.5) {
                 decision.action = BotAction::RAISE;
                 decision.amount = calculateRaiseAmount(handStrength, potAmount);
-                decision.reasoning = "Очень сильная рука, рейз";
-            } else if (handStrength > 0.6) {
-                if (shouldBluff(handStrength, potOdds)) {
-                    decision.action = BotAction::RAISE;
-                    decision.amount = calculateRaiseAmount(handStrength, potAmount);
-                    decision.reasoning = "Хорошая рука, рейз";
-                } else {
-                    decision.action = BotAction::CALL;
-                    decision.amount = currentBet;
-                    decision.reasoning = "Хорошая рука, колл";
-                }
-            } else if (handStrength > 0.3) {
-                if (shouldCall(handStrength, potOdds, currentBet)) {
-                    decision.action = BotAction::CALL;
-                    decision.amount = currentBet;
-                    decision.reasoning = "Пограничная рука, колл";
-                } else {
-                    decision.action = BotAction::FOLD;
-                    decision.amount = 0;
-                    decision.reasoning = "Пограничная рука, сброс";
-                }
+                decision.reasoning = "Сильная рука - рейз!";
             } else {
-                decision.action = BotAction::FOLD;
-                decision.amount = 0;
-                decision.reasoning = "Слабая рука, сброс";
+                decision.action = BotAction::CALL;
+                decision.amount = currentBet;
+                decision.reasoning = "Колл - иду до конца!";
+            }
             }
             break;
             
-        case BotDifficulty::HARD:
-            // Advanced decision making with bluffing
-            if (handStrength > 0.9) {
+        case BotDifficulty::HARD: {
+            // NO FOLDING - always play
+            if (handStrength > 0.6) {
                 decision.action = BotAction::RAISE;
                 decision.amount = calculateRaiseAmount(handStrength, potAmount);
-                decision.reasoning = "Отличная рука, рейз";
-            } else if (handStrength > 0.7) {
-                decision.action = BotAction::RAISE;
-                decision.amount = calculateRaiseAmount(handStrength, potAmount);
-                decision.reasoning = "Сильная рука, рейз";
-            } else if (handStrength > 0.5) {
-                if (shouldBluff(handStrength, potOdds)) {
-                    decision.action = BotAction::RAISE;
-                    decision.amount = calculateRaiseAmount(handStrength, potAmount);
-                    decision.reasoning = "Блеф с неплохой рукой";
-                } else {
-                    decision.action = BotAction::CALL;
-                    decision.amount = currentBet;
-                    decision.reasoning = "Неплохая рука, колл";
-                }
-            } else if (handStrength > 0.2) {
-                if (shouldBluff(handStrength, potOdds)) {
-                    decision.action = BotAction::CALL;
-                    decision.amount = currentBet;
-                    decision.reasoning = "Блеф со слабой рукой";
-                } else {
-                    decision.action = BotAction::FOLD;
-                    decision.amount = 0;
-                    decision.reasoning = "Слабая рука, сброс";
-                }
+                decision.reasoning = "Сильная рука - рейз!";
             } else {
-                decision.action = BotAction::FOLD;
-                decision.amount = 0;
-                decision.reasoning = "Очень слабая рука, сброс";
+                decision.action = BotAction::CALL;
+                decision.amount = currentBet;
+                decision.reasoning = "Колл - все или ничего!";
+            }
             }
             break;
     }
@@ -245,16 +189,16 @@ double BotPlayer::calculateWinProbability(const std::vector<Card>& hand,
 }
 
 bool BotPlayer::shouldBluff(double handStrength, int potOdds) {
-    // Увеличиваем шанс блефа - бот становится более рискованным
-    double bluffChance = (bluffingFactor + 0.3) * (1.0 - handStrength);
+    // ОЧЕНЬ агрессивный блеф - бот почти всегда рискует
+    double bluffChance = (bluffingFactor + 0.6) * (1.0 - handStrength); // +0.6 вместо +0.3
     
     // Дополнительно повышаем шанс блефа при больших банках
     if (potOdds > 20) {
-        bluffChance += 0.2; // Еще больше риска при крупном банке
+        bluffChance += 0.3; // Еще больше риска при крупном банке
     }
     
-    // Ограничиваем максимальный шанс блефа
-    bluffChance = std::min(0.8, bluffChance);
+    // Минимальный шанс блефа 50%
+    bluffChance = std::max(0.5, std::min(0.95, bluffChance));
     
     double randomFactor = getRandomDouble(0.0, 1.0);
     
@@ -286,17 +230,18 @@ bool BotPlayer::shouldRaise(double handStrength, int potOdds) {
 }
 
 int BotPlayer::calculateRaiseAmount(double handStrength, int potAmount) {
-    // Увеличиваем базовую ставку для более агрессивной игры
-    int baseRaise = static_cast<int>(potAmount * 0.75); // Увеличиваем с 0.5 до 0.75
-    double aggressionMultiplier = 1.0 + aggressionFactor + 0.5; // Добавляем 0.5 к агрессивности
+    // МАКСИМАЛЬНО агрессивные ставки - бот ставит очень большие суммы
+    int baseRaise = static_cast<int>(potAmount * 1.2); // Увеличиваем с 0.75 до 1.2
+    double aggressionMultiplier = 1.0 + aggressionFactor + 1.0; // Добавляем +1.0 к агрессивности
     
     int raiseAmount = static_cast<int>(baseRaise * aggressionMultiplier * handStrength);
     
-    // Увеличиваем случайность для непредсказуемости
-    int randomFactor = getRandomAmount(0, 50); // Увеличиваем максимальную случайность
+    // МАКСИМАЛЬНАЯ случайность для полной непредсказуемости
+    int randomFactor = getRandomAmount(0, 100); // Увеличиваем с 50 до 100
     raiseAmount += randomFactor;
     
-    return std::max(20, raiseAmount); // Минимальный рейз увеличиваем до 20
+    // Минимальный рейз $30, но часто будет больше
+    return std::max(30, raiseAmount);
 }
 
 int BotPlayer::getRandomAmount(int min, int max) {

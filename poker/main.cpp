@@ -32,6 +32,7 @@ private:
     GameBoard gameBoard;  // Добавляем игровое поле
     int currentBetAmount;  // Текущая ставка
     int potSize;  // Размер банка
+    int botBalance;  // Баланс бота
     
     void displayMainMenu();
     void displayGameMenu();
@@ -66,7 +67,7 @@ public:
     void run();
 };
 
-PokerGameManager::PokerGameManager() : gameRunning(false), currentBetAmount(0), potSize(0), gameDeck(), gameBoard() {
+PokerGameManager::PokerGameManager() : gameRunning(false), currentBetAmount(0), potSize(0), botBalance(1000), gameDeck(), gameBoard() {
     // Initialize game components
     stateManager = StateManager();
     playerWallet = Wallet("Player", 1000);
@@ -97,8 +98,8 @@ void PokerGameManager::run() {
     humanPlayer = make_shared<Player>(playerName);
     playerWallet.setOwner(playerName);
     
-    // Create bot player
-    botPlayer = make_shared<BotPlayer>("Бот", BotDifficulty::MEDIUM);
+    // Create bot player (EASY - самый мягкий и не сбрасывает, HARD - более агрессивный)
+    botPlayer = make_shared<BotPlayer>("Бот", BotDifficulty::EASY);
     
     cout << "Добро пожаловать, " << playerName << "!" << endl;
     cout << "У вас $" << playerWallet.getBalance() << " в кошельке." << endl;
@@ -225,6 +226,10 @@ void PokerGameManager::startNewGame() {
     // Create new game session
     string sessionId = stateManager.createNewGame();
     
+    // Сбрасываем баланс бота для новой игры
+    botBalance = 1000;
+    cout << "Баланс бота сброшен до $1000" << endl;
+    
     // Add players to game
     stateManager.addPlayer(humanPlayer);
     stateManager.addPlayer(botPlayer);
@@ -247,15 +252,21 @@ void PokerGameManager::startNewGame() {
         int bigBlind = 10;
         cout << "\nБлайнды: малый блайнд $" << smallBlind << ", большой блайнд $" << bigBlind << endl;
         
-        // Игрок делает большой блайнд
+        // БОТ делает МАЛЫЙ блайнд
+        botBalance -= smallBlind;
+        potSize = smallBlind;
+        cout << "Бот делает малый блайнд $" << smallBlind << endl;
+        cout << "Баланс бота: $" << botBalance << endl;
+        
+        // ИГРОК делает БОЛЬШОЙ блайнд
         if (playerWallet.canAfford(bigBlind)) {
             playerWallet.placeBet(bigBlind);
-            potSize += bigBlind;
+            potSize = smallBlind + bigBlind;
             cout << "Вы делаете большой блайнд $" << bigBlind << endl;
+            cout << "Ваш баланс: $" << playerWallet.getBalance() << endl;
         }
         
-        currentBetAmount = bigBlind;
-        potSize = bigBlind;
+        currentBetAmount = 0; // После блайндов ставки уравнены, можно продолжать
         
         gameRunning = true;
         playGame();
@@ -322,6 +333,7 @@ void PokerGameManager::displayGameState() {
     cout << "Фаза: " << stateManager.getStateString() << endl;
     cout << "Текущий игрок: " << stateManager.getCurrentPlayerName() << endl;
     cout << "Ваш баланс: $" << playerWallet.getBalance() << endl;
+    cout << "Баланс бота: $" << botBalance << endl;
     cout << "Текущая ставка: $" << currentBetAmount << endl;
     cout << "Банк: $" << potSize << endl;
     
@@ -355,8 +367,13 @@ void PokerGameManager::handlePlayerAction() {
         cout << menuIndex << ". Колл (Call) - принять ставку $" << currentBetAmount << endl;
     }
     
-    cout << "3. Рейз (Raise) - повысить ставку" << endl;
-    cout << "4. Ва-банк (All-In)" << endl;
+    // Проверяем, может ли игрок делать рейз или ва-банк
+    if (playerWallet.getBalance() > 0) {
+        cout << "3. Рейз (Raise) - повысить ставку" << endl;
+        cout << "4. Ва-банк (All-In)" << endl;
+    } else {
+        cout << "У вас нет средств для дополнительных ставок (ваш баланс: $0)" << endl;
+    }
     cout << "=================" << endl;
     
     int choice;
@@ -383,10 +400,18 @@ void PokerGameManager::handlePlayerAction() {
             }
             break;
         case 3:
-            handlePlayerRaise();
+            if (playerWallet.getBalance() > 0) {
+                handlePlayerRaise();
+            } else {
+                cout << "У вас нет средств для рейза!" << endl;
+            }
             break;
         case 4:
-            handlePlayerAllIn();
+            if (playerWallet.getBalance() > 0) {
+                handlePlayerAllIn();
+            } else {
+                cout << "У вас нет средств для ва-банка!" << endl;
+            }
             break;
                         default:
             cout << "Неверный выбор!" << endl;
@@ -431,7 +456,9 @@ void PokerGameManager::handleBotAction() {
                 {
                     int betAmount = (decision.amount > 0) ? decision.amount : currentBetAmount;
                     cout << "Бот делает колл на $" << betAmount << "." << endl;
+                    botBalance -= betAmount;
                     potSize += betAmount;
+                    cout << "Баланс бота после колла: $" << botBalance << endl;
                     stateManager.playerCall(botPlayer->getName(), betAmount);
                 }
                 break;
@@ -440,19 +467,21 @@ void PokerGameManager::handleBotAction() {
                     int raiseAmount = (decision.amount > currentBetAmount) ? decision.amount : currentBetAmount + 20;
                     int additionalBet = raiseAmount - currentBetAmount;
                     cout << "Бот повышает ставку до $" << raiseAmount << " (дополнительно: $" << additionalBet << ")." << endl;
+                    botBalance -= additionalBet;
                     potSize += additionalBet;
                     stateManager.playerRaise(botPlayer->getName(), raiseAmount);
                     currentBetAmount = raiseAmount;
                     // Уведомляем игрока о новой ставке
-                    cout << "Текущая ставка теперь: $" << currentBetAmount << ", банк: $" << potSize << endl;
+                    cout << "Текущая ставка теперь: $" << currentBetAmount << ", банк: $" << potSize << ", баланс бота: $" << botBalance << endl;
                 }
                 break;
             case BotAction::ALL_IN:
                 {
                     cout << "Бот идет ва-банк!" << endl;
-                    int allInAmount = 1000; // Предполагаем, что у бота $1000
+                    int allInAmount = botBalance; // Используем текущий баланс бота
                     potSize += allInAmount;
-                    cout << "Бот ставит на кон $" << allInAmount << ". Банк: $" << potSize << endl;
+                    botBalance = 0;
+                    cout << "Бот ставит на кон $" << allInAmount << ". Банк: $" << potSize << ", баланс бота: $" << botBalance << endl;
                     stateManager.playerAllIn(botPlayer->getName());
                 }
                 break;
@@ -537,8 +566,8 @@ void PokerGameManager::displayPlayerPossibleCombinations() {
         for (size_t i = 0; i < evaluation.kickers.size() && i < 3; i++) {
             cout << evaluation.kickers[i];
             if (i < evaluation.kickers.size() - 1 && i < 2) cout << ", ";
-        }
-        cout << endl;
+    }
+    cout << endl;
     }
 }
 
@@ -554,7 +583,7 @@ void PokerGameManager::dealFlop() {
         gameBoard.addCommunityCard(card);
     }
     
-    cout << "\n=== ФЛОП ===" << endl;
+    // Выводим уже в playGame, поэтому не дублируем здесь
     displayCommunityCards();
 }
 
@@ -570,7 +599,7 @@ void PokerGameManager::dealTurn() {
         gameBoard.addCommunityCard(card);
     }
     
-    cout << "\n=== ТЕРН ===" << endl;
+    // Выводим уже в playGame
     displayCommunityCards();
 }
 
@@ -586,7 +615,7 @@ void PokerGameManager::dealRiver() {
         gameBoard.addCommunityCard(card);
     }
     
-    cout << "\n=== РИВЕР ===" << endl;
+    // Выводим уже в playGame
     displayCommunityCards();
 }
 
@@ -724,6 +753,11 @@ void PokerGameManager::handlePlayerAllIn() {
         stateManager.playerAllIn(humanPlayer->getName());
         potSize += allInAmount;
         cout << "Вы пошли ва-банк на $" << allInAmount << "!" << endl;
+        
+        // После ва-банка у игрока больше нет средств, он не может делать ход
+        // Обнуляем currentBetAmount чтобы бот понимал что ставка покрыта
+        currentBetAmount = 0;
+        cout << "Вы пошли ва-банк. Ожидайте ответа бота и раскрытия карт!" << endl;
     } else {
         cout << "У вас нет средств для ва-банка!" << endl;
     }
