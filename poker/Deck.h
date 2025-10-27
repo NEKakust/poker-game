@@ -14,6 +14,8 @@ public:
     void resetDeck();
     void shuffle();
     Card dealCard();
+    int getRemainingCards() const { return cards.size(); }
+    bool isEmpty() const { return cards.empty(); }
 
 };
 
