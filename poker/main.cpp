@@ -28,13 +28,13 @@ private:
     Wallet playerWallet;
     Timer gameTimer;
     bool gameRunning;
-    Deck gameDeck;  // Добавляем колоду
-    GameBoard gameBoard;  // Добавляем игровое поле
-    int currentBetAmount;  // Текущая ставка
-    int potSize;  // Размер банка
-    int botBalance;  // Баланс бота
-    int playerBetAmount;  // Сколько поставил игрок в этом раунде
-    int botBetAmount;  // Сколько поставил бот в этом раунде
+    Deck gameDeck;
+    GameBoard gameBoard;
+    int currentBetAmount;
+    int potSize;
+    int botBalance;
+    int playerBetAmount;
+    int botBetAmount;
     
     void displayMainMenu();
     void displayGameMenu();
@@ -48,7 +48,6 @@ private:
     void displayGameState();
     void processGameRound();
     
-    // Новые методы для игры
     void dealCardsToPlayers();
     void displayCommunityCards();
     void displayPlayerPossibleCombinations();
@@ -61,8 +60,8 @@ private:
     void handlePlayerCall();
     void handlePlayerRaise();
     void handlePlayerAllIn();
-    bool canCheck();  // Можно ли сделать чек (проверка, что текущая ставка = 0)
-    bool canCall();  // Можно ли сделать колл (есть текущая ставка > 0)
+    bool canCheck();
+    bool canCall();
     
 public:
     PokerGameManager();
