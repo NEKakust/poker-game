@@ -93,19 +93,33 @@ BotDecision BotPlayer::makeDecision(const std::vector<Card>& communityCards,
     // Make decision based on difficulty and personality
     switch (difficulty) {
         case BotDifficulty::EASY:
-            // Simple decision making
-            if (handStrength > 0.7) {
+            // Очень агрессивная и рискованная игра
+            if (handStrength > 0.5) {
+                // Рейз даже при средних руках
                 decision.action = BotAction::RAISE;
                 decision.amount = calculateRaiseAmount(handStrength, potAmount);
-                decision.reasoning = "Сильная рука, рейз";
-            } else if (handStrength > 0.4) {
+                decision.reasoning = "Рискну с такой рукой, рейз!";
+            } else if (handStrength > 0.25) {
+                // Колл при слабых руках
                 decision.action = BotAction::CALL;
                 decision.amount = currentBet;
-                decision.reasoning = "Неплохая рука, колл";
+                decision.reasoning = "Попробую рискнуть с такой рукой";
+            } else if (handStrength > 0.1) {
+                // Блеф при очень слабых руках
+                if (shouldBluff(handStrength, potOdds)) {
+                    decision.action = BotAction::RAISE;
+                    decision.amount = calculateRaiseAmount(handStrength, potAmount);
+                    decision.reasoning = "Блеф! Риск-бизнес!";
+                } else {
+                    decision.action = BotAction::CALL;
+                    decision.amount = currentBet;
+                    decision.reasoning = "Рискую посмотреть следующие карты";
+                }
             } else {
+                // Сброс только при совсем слабых руках
                 decision.action = BotAction::FOLD;
                 decision.amount = 0;
-                decision.reasoning = "Слабая рука, сброс";
+                decision.reasoning = "Слишком слабая рука";
             }
             break;
             

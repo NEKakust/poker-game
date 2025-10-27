@@ -304,7 +304,7 @@ void PokerGameManager::playGame() {
             
             cout << "\n=== ИГРА ОКОНЧЕНА ===" << endl;
             gameRunning = false;
-            break;
+                            break;
         }
         
         roundCount++;
@@ -382,10 +382,10 @@ void PokerGameManager::handlePlayerAction() {
         case 4:
             handlePlayerAllIn();
             break;
-        default:
+                        default:
             cout << "Неверный выбор!" << endl;
-            break;
-    }
+                            break;
+                    }
     
     // После действия игрока переходим к следующему
     stateManager.nextPlayer();
@@ -394,26 +394,53 @@ void PokerGameManager::handlePlayerAction() {
 void PokerGameManager::handleBotAction() {
     cout << "\n=== ХОД БОТА ===" << endl;
     
-    // Get bot decision (simplified)
     if (botPlayer) {
-        BotDecision decision = botPlayer->getAction({}, 100, 10, 10); // Simplified parameters
+        // Получаем карты на столе
+        std::vector<Card> communityCards = gameBoard.getCommunityCards();
+        
+        // Вызываем решение бота с реальными параметрами
+        BotDecision decision = botPlayer->getAction(communityCards, potSize, currentBetAmount, 1000);
         botPlayer->displayDecision(decision);
         
         // Execute bot action
+        int oldBalance = playerWallet.getBalance();
         switch (decision.action) {
             case BotAction::FOLD:
+                cout << "Бот сбрасывает карты." << endl;
                 stateManager.playerFold(botPlayer->getName());
+                // Игрок побеждает автоматически
+                cout << "\n=== БОТ СБРОСИЛ КАРТЫ ===" << endl;
+                cout << "=== ВЫ ПОБЕДИЛИ! ===" << endl;
+                cout << "Вы выиграли $" << potSize << endl;
+                cout << "Старый баланс: $" << oldBalance << endl;
+                playerWallet.addBonus(potSize, "Победа в покере (бот сбросил)");
+                cout << "Новый баланс: $" << playerWallet.getBalance() << endl;
+                gameRunning = false;
                 break;
             case BotAction::CHECK:
+                cout << "Бот делает чек." << endl;
                 stateManager.playerCheck(botPlayer->getName());
                 break;
             case BotAction::CALL:
-                stateManager.playerCall(botPlayer->getName(), decision.amount);
+                {
+                    int betAmount = (decision.amount > 0) ? decision.amount : currentBetAmount;
+                    cout << "Бот делает колл на $" << betAmount << "." << endl;
+                    stateManager.playerCall(botPlayer->getName(), betAmount);
+                    // Бот не платит из-за отсутствия кошелька
+                }
                 break;
             case BotAction::RAISE:
-                stateManager.playerRaise(botPlayer->getName(), decision.amount);
+                {
+                    int raiseAmount = (decision.amount > currentBetAmount) ? decision.amount : currentBetAmount + 20;
+                    cout << "Бот повышает ставку до $" << raiseAmount << "." << endl;
+                    stateManager.playerRaise(botPlayer->getName(), raiseAmount);
+                    currentBetAmount = raiseAmount;
+                    // Уведомляем игрока о новой ставке
+                    cout << "Текущая ставка теперь: $" << currentBetAmount << endl;
+                }
                 break;
             case BotAction::ALL_IN:
+                cout << "Бот идет ва-банк!" << endl;
                 stateManager.playerAllIn(botPlayer->getName());
                 break;
         }
@@ -542,11 +569,14 @@ void PokerGameManager::determineWinnerAndDistributeWinnings() {
                      (playerEval.rankValue == botEval.rankValue && 
                       playerEval.kickers > botEval.kickers);
     
+    int oldBalance = playerWallet.getBalance();
+    
     if (playerWins) {
         cout << "\n=== ВЫ ПОБЕДИЛИ! ===" << endl;
         cout << "Вы выиграли $" << potSize << endl;
-        playerWallet.addWinnings(potSize);
-        cout << "Ваш новый баланс: $" << playerWallet.getBalance() << endl;
+        cout << "Старый баланс: $" << oldBalance << endl;
+        playerWallet.addBonus(potSize, "Победа в покере");
+        cout << "Новый баланс: $" << playerWallet.getBalance() << endl;
     } else if (playerEval.rankValue < botEval.rankValue ||
                (playerEval.rankValue == botEval.rankValue && 
                 playerEval.kickers < botEval.kickers)) {
@@ -555,7 +585,8 @@ void PokerGameManager::determineWinnerAndDistributeWinnings() {
     } else {
         cout << "\n=== НИЧЬЯ! ===" << endl;
         cout << "Возврат $" << (potSize / 2) << endl;
-        playerWallet.addWinnings(potSize / 2);
+        playerWallet.addBonus(potSize / 2, "Ничья");
+        cout << "Новый баланс: $" << playerWallet.getBalance() << endl;
     }
     
     // Обнуляем банк
