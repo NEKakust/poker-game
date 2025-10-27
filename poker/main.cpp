@@ -33,6 +33,8 @@ private:
     int currentBetAmount;  // Текущая ставка
     int potSize;  // Размер банка
     int botBalance;  // Баланс бота
+    int playerBetAmount;  // Сколько поставил игрок в этом раунде
+    int botBetAmount;  // Сколько поставил бот в этом раунде
     
     void displayMainMenu();
     void displayGameMenu();
@@ -67,7 +69,7 @@ public:
     void run();
 };
 
-PokerGameManager::PokerGameManager() : gameRunning(false), currentBetAmount(0), potSize(0), botBalance(1000), gameDeck(), gameBoard() {
+PokerGameManager::PokerGameManager() : gameRunning(false), currentBetAmount(0), potSize(0), botBalance(1000), playerBetAmount(0), botBetAmount(0), gameDeck(), gameBoard() {
     // Initialize game components
     stateManager = StateManager();
     playerWallet = Wallet("Player", 1000);
@@ -254,6 +256,7 @@ void PokerGameManager::startNewGame() {
         
         // БОТ делает МАЛЫЙ блайнд
         botBalance -= smallBlind;
+        botBetAmount = smallBlind;
         potSize = smallBlind;
         cout << "Бот делает малый блайнд $" << smallBlind << endl;
         cout << "Баланс бота: $" << botBalance << endl;
@@ -261,12 +264,16 @@ void PokerGameManager::startNewGame() {
         // ИГРОК делает БОЛЬШОЙ блайнд
         if (playerWallet.canAfford(bigBlind)) {
             playerWallet.placeBet(bigBlind);
+            playerBetAmount = bigBlind;
             potSize = smallBlind + bigBlind;
             cout << "Вы делаете большой блайнд $" << bigBlind << endl;
             cout << "Ваш баланс: $" << playerWallet.getBalance() << endl;
         }
         
-        currentBetAmount = 0; // После блайндов ставки уравнены, можно продолжать
+        // После блайндов ставки уравнены, можно продолжать
+        playerBetAmount = 0;
+        botBetAmount = 0;
+        currentBetAmount = 0;
         
         gameRunning = true;
         playGame();
@@ -454,25 +461,33 @@ void PokerGameManager::handleBotAction() {
                 break;
             case BotAction::CALL:
                 {
-                    int betAmount = (decision.amount > 0) ? decision.amount : currentBetAmount;
-                    cout << "Бот делает колл на $" << betAmount << "." << endl;
-                    botBalance -= betAmount;
-                    potSize += betAmount;
-                    cout << "Баланс бота после колла: $" << botBalance << endl;
-                    stateManager.playerCall(botPlayer->getName(), betAmount);
+                    // Бот должен уравнять ставку игрока
+                    int callAmount = playerBetAmount - botBetAmount;
+                    if (callAmount > 0) {
+                        cout << "Бот делает колл на $" << callAmount << "." << endl;
+                        botBalance -= callAmount;
+                        botBetAmount += callAmount;
+                        potSize += callAmount;
+                        currentBetAmount = 0; // Ставки уравнены
+                        cout << "Баланс бота после колла: $" << botBalance << ", банк: $" << potSize << endl;
+                        stateManager.playerCall(botPlayer->getName(), callAmount);
+                    } else {
+                        cout << "Ставки уже уравнены, бот делает чек." << endl;
+                        stateManager.playerCheck(botPlayer->getName());
+                    }
                 }
                 break;
             case BotAction::RAISE:
                 {
-                    int raiseAmount = (decision.amount > currentBetAmount) ? decision.amount : currentBetAmount + 20;
-                    int additionalBet = raiseAmount - currentBetAmount;
-                    cout << "Бот повышает ставку до $" << raiseAmount << " (дополнительно: $" << additionalBet << ")." << endl;
-                    botBalance -= additionalBet;
-                    potSize += additionalBet;
-                    stateManager.playerRaise(botPlayer->getName(), raiseAmount);
-                    currentBetAmount = raiseAmount;
-                    // Уведомляем игрока о новой ставке
+                    int raiseAmount = 30; // Минимальный рейз бота
+                    int newBotBet = botBetAmount + raiseAmount;
+                    cout << "Бот повышает ставку до $" << newBotBet << " (дополнительно: $" << raiseAmount << ")." << endl;
+                    botBalance -= raiseAmount;
+                    botBetAmount = newBotBet;
+                    potSize += raiseAmount;
+                    currentBetAmount = newBotBet - playerBetAmount; // Разница для игрока
                     cout << "Текущая ставка теперь: $" << currentBetAmount << ", банк: $" << potSize << ", баланс бота: $" << botBalance << endl;
+                    stateManager.playerRaise(botPlayer->getName(), newBotBet);
                 }
                 break;
             case BotAction::ALL_IN:
@@ -501,6 +516,11 @@ void PokerGameManager::dealCardsToPlayers() {
     if (botPlayer) {
         botPlayer->clearHand();
     }
+    
+    // Сбрасываем ставки для новой раздачи
+    playerBetAmount = 0;
+    botBetAmount = 0;
+    currentBetAmount = 0;
     
     // Сбрасываем и тасуем колоду
     gameDeck.resetDeck();
@@ -709,14 +729,24 @@ void PokerGameManager::handlePlayerCall() {
         return;
     }
     
-    if (playerWallet.canAfford(currentBetAmount)) {
+    // Вычисляем разницу: сколько нужно поставить, чтобы уравнять ставку бота
+    int callAmount = botBetAmount - playerBetAmount;
+    
+    if (callAmount <= 0) {
+        cout << "Ставки уже уравнены!" << endl;
+        return;
+    }
+    
+    if (playerWallet.canAfford(callAmount)) {
         // Снимаем ставку с кошелька
-        playerWallet.placeBet(currentBetAmount);
+        playerWallet.placeBet(callAmount);
+        playerBetAmount += callAmount;
         // Фиксируем действие в StateManager
-        stateManager.playerCall(humanPlayer->getName(), currentBetAmount);
+        stateManager.playerCall(humanPlayer->getName(), callAmount);
         // Увеличиваем банк
-        potSize += currentBetAmount;
-        cout << "Вы сделали колл на $" << currentBetAmount << "." << endl;
+        potSize += callAmount;
+        currentBetAmount = 0; // Ставки уравнены
+        cout << "Вы сделали колл на $" << callAmount << "." << endl;
         cout << "Ваш баланс: $" << playerWallet.getBalance() << endl;
         cout << "Банк: $" << potSize << endl;
     } else {
@@ -725,8 +755,13 @@ void PokerGameManager::handlePlayerCall() {
 }
 
 void PokerGameManager::handlePlayerRaise() {
+    if (playerWallet.getBalance() <= 0) {
+        cout << "У вас нет средств для рейза!" << endl;
+        return;
+    }
+    
     int raiseAmount;
-    cout << "Введите сумму повышения (минимум $" << (currentBetAmount + 10) << "): ";
+    cout << "Введите сумму повышения (минимум $20): ";
     if (!(cin >> raiseAmount)) {
         cout << "Неверный ввод!" << endl;
         cin.clear();
@@ -734,13 +769,21 @@ void PokerGameManager::handlePlayerRaise() {
         return;
     }
     
-    int totalBet = currentBetAmount + raiseAmount;
-    if (playerWallet.canAfford(totalBet)) {
-        playerWallet.placeBet(totalBet);
-        stateManager.playerRaise(humanPlayer->getName(), totalBet);
-        currentBetAmount = totalBet;
-        potSize += totalBet;
-        cout << "Вы повысили ставку до $" << totalBet << "." << endl;
+    if (raiseAmount < 20) {
+        cout << "Минимальный рейз $20!" << endl;
+        return;
+    }
+    
+    int newBetAmount = playerBetAmount + raiseAmount;
+    
+    if (playerWallet.canAfford(newBetAmount)) {
+        playerWallet.placeBet(newBetAmount);
+        playerBetAmount = newBetAmount;
+        stateManager.playerRaise(humanPlayer->getName(), newBetAmount);
+        potSize += newBetAmount;
+        currentBetAmount = playerBetAmount - botBetAmount; // Разница для бота
+        cout << "Вы повысили ставку до $" << playerBetAmount << " (дополнительно: $" << raiseAmount << ")." << endl;
+        cout << "Бот должен уравнять ставку!" << endl;
     } else {
         cout << "Недостаточно средств!" << endl;
     }

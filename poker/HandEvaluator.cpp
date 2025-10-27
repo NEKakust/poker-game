@@ -4,16 +4,16 @@
 #include <iostream>
 
 const std::vector<std::string> HandEvaluator::HAND_NAMES = {
-    "High Card",
-    "One Pair",
-    "Two Pair",
-    "Three of a Kind",
-    "Straight",
-    "Flush",
-    "Full House",
-    "Four of a Kind",
-    "Straight Flush",
-    "Royal Flush"
+    "Старшая карта",
+    "Пара",
+    "Две пары",
+    "Тройка",
+    "Стрит",
+    "Флэш",
+    "Фулл-хаус",
+    "Каре",
+    "Стрит-флэш",
+    "Роял-флэш"
 };
 
 HandEvaluation HandEvaluator::evaluateHand(const std::vector<Card>& hand) {

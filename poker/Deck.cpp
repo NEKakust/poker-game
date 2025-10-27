@@ -2,8 +2,8 @@
 #include <ctime>
 
 Deck::Deck() {
-    std::string ranks[] = { "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A" };
-    std::string suits[] = { "Spades", "Hearts", "Diamonds", "Clubs" };
+    std::string ranks[] = { "2", "3", "4", "5", "6", "7", "8", "9", "10", "Валет", "Дама", "Король", "Туз" };
+    std::string suits[] = { "Пики", "Червы", "Бубны", "Трефы" };
 
     for (const auto & suit : suits) {
         for (const auto & rank : ranks) {
@@ -15,8 +15,8 @@ Deck::Deck() {
 
 void Deck::resetDeck() {
     cards.clear();
-    std::string ranks[] = { "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A" };
-    std::string suits[] = { "Spades", "Hearts", "Diamonds", "Clubs" };
+    std::string ranks[] = { "2", "3", "4", "5", "6", "7", "8", "9", "10", "Валет", "Дама", "Король", "Туз" };
+    std::string suits[] = { "Пики", "Червы", "Бубны", "Трефы" };
 
     for (const auto & suit : suits) {
         for (const auto & rank : ranks) {

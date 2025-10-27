@@ -10,9 +10,9 @@ void Player::addCard(Card const& card) {
 }
 
 void Player::displayHand() {
-    std::cout << name << "'s Hand:" << std::endl;
+    std::cout << "Рука " << name << ":" << std::endl;
     for (const auto& card : hand) {
-        std::cout << "Card: " << card.getRank() << " of " << card.getSuit() << std::endl;
+        std::cout << "Карта: " << card.getRank() << " " << card.getSuit() << std::endl;
     }
 }
 

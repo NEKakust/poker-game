@@ -94,14 +94,26 @@ BotDecision BotPlayer::makeDecision(const std::vector<Card>& communityCards,
     switch (difficulty) {
         case BotDifficulty::EASY: {
             // БОТ НИКОГДА НЕ СБРАСЫВАЕТ - ВСЕГДА ИГРАЕТ ДО КОНЦА
-            // Делаем рейз даже при слабых руках - агрессивная игра
-            if (handStrength > 0.1) { // Снижаем порог с 0.3 до 0.1
-                // Почти всегда рейз
+            double randomRisk = getRandomDouble(0.0, 1.0);
+            
+            if (handStrength > 0.6) {
+                // Очень сильные руки - ва-банк с вероятностью 70%
+                if (randomRisk < 0.7) {
+                    decision.action = BotAction::ALL_IN;
+                    decision.amount = bankroll;
+                    decision.reasoning = "ВА-БАНК! Сильная рука!";
+                } else {
+                    decision.action = BotAction::RAISE;
+                    decision.amount = calculateRaiseAmount(handStrength, potAmount);
+                    decision.reasoning = "РЕЙЗ! Иду до победы!";
+                }
+            } else if (handStrength > 0.1) {
+                // Средние руки - рейз
                 decision.action = BotAction::RAISE;
                 decision.amount = calculateRaiseAmount(handStrength, potAmount);
-                decision.reasoning = "РЕЙЗ! Иду до победы!";
+                decision.reasoning = "РЕЙЗ! Рискую!";
             } else {
-                // Только очень слабые руки - колл
+                // Слабые руки - колл
                 decision.action = BotAction::CALL;
                 decision.amount = currentBet;
                 decision.reasoning = "КОЛЛ! Никогда не сдаюсь!";
