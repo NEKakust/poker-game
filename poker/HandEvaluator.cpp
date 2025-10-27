@@ -61,9 +61,19 @@ bool HandEvaluator::isRoyalFlush(const std::vector<Card>& hand) {
     if (!isFlush(hand)) return false;
     
     std::vector<int> ranks = getSortedRanks(hand);
-    std::vector<int> royalRanks = {10, 11, 12, 13, 14}; // 10, J, Q, K, A
     
-    return std::includes(ranks.begin(), ranks.end(), royalRanks.begin(), royalRanks.end());
+    // Check for 10, J, Q, K, A (rank values: 10, 11, 12, 13, 14)
+    std::vector<int> requiredRanks = {10, 11, 12, 13, 14};
+    bool hasAllRanks = true;
+    
+    for (int rank : requiredRanks) {
+        if (std::find(ranks.begin(), ranks.end(), rank) == ranks.end()) {
+            hasAllRanks = false;
+            break;
+        }
+    }
+    
+    return hasAllRanks;
 }
 
 bool HandEvaluator::isStraightFlush(const std::vector<Card>& hand) {
@@ -92,9 +102,14 @@ bool HandEvaluator::isStraight(const std::vector<Card>& hand) {
     
     // Check for A-2-3-4-5 straight
     std::vector<int> lowStraight = {2, 3, 4, 5, 14};
-    if (std::includes(ranks.begin(), ranks.end(), lowStraight.begin(), lowStraight.end())) {
-        return true;
+    bool hasLowStraight = true;
+    for (int rank : lowStraight) {
+        if (std::find(ranks.begin(), ranks.end(), rank) == ranks.end()) {
+            hasLowStraight = false;
+            break;
+        }
     }
+    if (hasLowStraight) return true;
     
     return hasConsecutiveRanks(ranks);
 }

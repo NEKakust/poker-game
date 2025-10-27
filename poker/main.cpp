@@ -51,6 +51,7 @@ private:
     void dealFlop();
     void dealTurn();
     void dealRiver();
+    void determineWinnerAndDistributeWinnings();
     void handlePlayerFold();
     void handlePlayerCheck();
     void handlePlayerCall();
@@ -112,7 +113,7 @@ void PokerGameManager::run() {
             cin.ignore((numeric_limits<streamsize>::max)(), '\n');
             continue;
         }
-        
+
         switch (choice) {
             case 1:
                 startNewGame();
@@ -156,11 +157,11 @@ void PokerGameManager::displayWalletMenu() {
         cout << "Выберите опцию: ";
         if (!(cin >> choice)) {
             cout << "Неверный ввод!" << endl;
-            cin.clear();
+                        cin.clear();
             cin.ignore((numeric_limits<streamsize>::max)(), '\n');
-            continue;
-        }
-        
+                        continue;
+                    }
+
         switch (choice) {
             case 1: {
                 int amount;
@@ -172,7 +173,7 @@ void PokerGameManager::displayWalletMenu() {
                 } else {
                     cout << "Неверная сумма!" << endl;
                 }
-                break;
+                            break;
             }
             case 2: {
                 int amount;
@@ -297,6 +298,10 @@ void PokerGameManager::playGame() {
             currentBetAmount = 0; // Сбрасываем ставки
             dealRiver();
             cout << "\n=== ШОУДАУН ===" << endl;
+            
+            // Определяем победителя и начисляем выигрыш
+            determineWinnerAndDistributeWinnings();
+            
             cout << "\n=== ИГРА ОКОНЧЕНА ===" << endl;
             gameRunning = false;
             break;
@@ -504,6 +509,57 @@ void PokerGameManager::dealRiver() {
     
     cout << "\n=== РИВЕР ===" << endl;
     displayCommunityCards();
+}
+
+void PokerGameManager::determineWinnerAndDistributeWinnings() {
+    if (!humanPlayer || !botPlayer) return;
+    
+    // Получаем карты игрока и бота
+    std::vector<Card> playerHand = humanPlayer->getHand();
+    std::vector<Card> botHand = botPlayer->getHand();
+    
+    // Получаем карты на столе
+    std::vector<Card> communityCards = gameBoard.getCommunityCards();
+    
+    // Формируем полные руки (комбинация карт игрока + карты на столе)
+    std::vector<Card> playerFullHand = playerHand;
+    playerFullHand.insert(playerFullHand.end(), communityCards.begin(), communityCards.end());
+    
+    std::vector<Card> botFullHand = botHand;
+    botFullHand.insert(botFullHand.end(), communityCards.begin(), communityCards.end());
+    
+    // Оцениваем руки
+    HandEvaluation playerEval = HandEvaluator::evaluateHand(playerFullHand);
+    HandEvaluation botEval = HandEvaluator::evaluateHand(botFullHand);
+    
+    // Отображаем результаты
+    cout << "\n--- ОЦЕНКА РУК ---" << endl;
+    cout << "Ваша лучшая рука: " << playerEval.handName << endl;
+    cout << "Рука бота: " << botEval.handName << endl;
+    
+    // Сравниваем руки
+    bool playerWins = playerEval.rankValue > botEval.rankValue ||
+                     (playerEval.rankValue == botEval.rankValue && 
+                      playerEval.kickers > botEval.kickers);
+    
+    if (playerWins) {
+        cout << "\n=== ВЫ ПОБЕДИЛИ! ===" << endl;
+        cout << "Вы выиграли $" << potSize << endl;
+        playerWallet.addWinnings(potSize);
+        cout << "Ваш новый баланс: $" << playerWallet.getBalance() << endl;
+    } else if (playerEval.rankValue < botEval.rankValue ||
+               (playerEval.rankValue == botEval.rankValue && 
+                playerEval.kickers < botEval.kickers)) {
+        cout << "\n=== БОТ ПОБЕДИЛ! ===" << endl;
+        cout << "Вы проиграли $" << potSize << endl;
+    } else {
+        cout << "\n=== НИЧЬЯ! ===" << endl;
+        cout << "Возврат $" << (potSize / 2) << endl;
+        playerWallet.addWinnings(potSize / 2);
+    }
+    
+    // Обнуляем банк
+    potSize = 0;
 }
 
 bool PokerGameManager::canCheck() {
