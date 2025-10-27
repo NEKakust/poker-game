@@ -245,33 +245,58 @@ double BotPlayer::calculateWinProbability(const std::vector<Card>& hand,
 }
 
 bool BotPlayer::shouldBluff(double handStrength, int potOdds) {
-    double bluffChance = bluffingFactor * (1.0 - handStrength);
+    // Увеличиваем шанс блефа - бот становится более рискованным
+    double bluffChance = (bluffingFactor + 0.3) * (1.0 - handStrength);
+    
+    // Дополнительно повышаем шанс блефа при больших банках
+    if (potOdds > 20) {
+        bluffChance += 0.2; // Еще больше риска при крупном банке
+    }
+    
+    // Ограничиваем максимальный шанс блефа
+    bluffChance = std::min(0.8, bluffChance);
+    
     double randomFactor = getRandomDouble(0.0, 1.0);
     
     return randomFactor < bluffChance;
 }
 
 bool BotPlayer::shouldCall(double handStrength, int potOdds, int betAmount) {
-    double callThreshold = tightnessFactor * 0.5;
-    return handStrength > callThreshold;
+    // Более агрессивный порог для колла
+    double callThreshold = tightnessFactor * 0.3; // Снижаем порог с 0.5 до 0.3
+    
+    // Добавляем бонус за привлекательный банк
+    if (potOdds < 30) {
+        callThreshold -= 0.1; // Еще ниже порог при хороших шансах
+    }
+    
+    return handStrength > std::max(0.1, callThreshold); // Минимум 0.1
 }
 
 bool BotPlayer::shouldRaise(double handStrength, int potOdds) {
-    double raiseThreshold = tightnessFactor * 0.6;
-    return handStrength > raiseThreshold;
+    // Снижаем порог для рейза - бот становится более агрессивным
+    double raiseThreshold = tightnessFactor * 0.4; // Снижаем с 0.6 до 0.4
+    
+    // Добавляем бонус при больших банках
+    if (potOdds > 25) {
+        raiseThreshold -= 0.1; // Еще ниже порог при крупном банке
+    }
+    
+    return handStrength > std::max(0.2, raiseThreshold); // Минимум 0.2
 }
 
 int BotPlayer::calculateRaiseAmount(double handStrength, int potAmount) {
-    int baseRaise = potAmount / 2;
-    double aggressionMultiplier = 1.0 + aggressionFactor;
+    // Увеличиваем базовую ставку для более агрессивной игры
+    int baseRaise = static_cast<int>(potAmount * 0.75); // Увеличиваем с 0.5 до 0.75
+    double aggressionMultiplier = 1.0 + aggressionFactor + 0.5; // Добавляем 0.5 к агрессивности
     
     int raiseAmount = static_cast<int>(baseRaise * aggressionMultiplier * handStrength);
     
-    // Add some randomness
-    int randomFactor = getRandomAmount(-10, 20);
+    // Увеличиваем случайность для непредсказуемости
+    int randomFactor = getRandomAmount(0, 50); // Увеличиваем максимальную случайность
     raiseAmount += randomFactor;
     
-    return std::max(10, raiseAmount); // Minimum raise of 10
+    return std::max(20, raiseAmount); // Минимальный рейз увеличиваем до 20
 }
 
 int BotPlayer::getRandomAmount(int min, int max) {

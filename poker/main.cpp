@@ -48,6 +48,7 @@ private:
     // Новые методы для игры
     void dealCardsToPlayers();
     void displayCommunityCards();
+    void displayPlayerPossibleCombinations();
     void dealFlop();
     void dealTurn();
     void dealRiver();
@@ -333,6 +334,11 @@ void PokerGameManager::displayGameState() {
     // Отображаем карты на столе
     displayCommunityCards();
     
+    // Отображаем возможные комбинации игрока
+    if (!gameBoard.getCommunityCards().empty()) {
+        displayPlayerPossibleCombinations();
+    }
+    
     cout << "=====================" << endl;
 }
 
@@ -425,23 +431,30 @@ void PokerGameManager::handleBotAction() {
                 {
                     int betAmount = (decision.amount > 0) ? decision.amount : currentBetAmount;
                     cout << "Бот делает колл на $" << betAmount << "." << endl;
+                    potSize += betAmount;
                     stateManager.playerCall(botPlayer->getName(), betAmount);
-                    // Бот не платит из-за отсутствия кошелька
                 }
                 break;
             case BotAction::RAISE:
                 {
                     int raiseAmount = (decision.amount > currentBetAmount) ? decision.amount : currentBetAmount + 20;
-                    cout << "Бот повышает ставку до $" << raiseAmount << "." << endl;
+                    int additionalBet = raiseAmount - currentBetAmount;
+                    cout << "Бот повышает ставку до $" << raiseAmount << " (дополнительно: $" << additionalBet << ")." << endl;
+                    potSize += additionalBet;
                     stateManager.playerRaise(botPlayer->getName(), raiseAmount);
                     currentBetAmount = raiseAmount;
                     // Уведомляем игрока о новой ставке
-                    cout << "Текущая ставка теперь: $" << currentBetAmount << endl;
+                    cout << "Текущая ставка теперь: $" << currentBetAmount << ", банк: $" << potSize << endl;
                 }
                 break;
             case BotAction::ALL_IN:
-                cout << "Бот идет ва-банк!" << endl;
-                stateManager.playerAllIn(botPlayer->getName());
+                {
+                    cout << "Бот идет ва-банк!" << endl;
+                    int allInAmount = 1000; // Предполагаем, что у бота $1000
+                    potSize += allInAmount;
+                    cout << "Бот ставит на кон $" << allInAmount << ". Банк: $" << potSize << endl;
+                    stateManager.playerAllIn(botPlayer->getName());
+                }
                 break;
         }
     }
@@ -487,6 +500,45 @@ void PokerGameManager::displayCommunityCards() {
         cout << "----------------------" << endl;
     } else {
         cout << "\nКарты на столе еще не выложены" << endl;
+    }
+}
+
+void PokerGameManager::displayPlayerPossibleCombinations() {
+    if (!humanPlayer) return;
+    
+    std::vector<Card> playerHand = humanPlayer->getHand();
+    std::vector<Card> communityCards = gameBoard.getCommunityCards();
+    
+    if (playerHand.size() < 2) return; // У игрока должны быть 2 карты
+    
+    // Формируем полную руку
+    std::vector<Card> fullHand = playerHand;
+    fullHand.insert(fullHand.end(), communityCards.begin(), communityCards.end());
+    
+    if (fullHand.size() < 2) {
+        cout << "\n--- Ваши карты: ";
+        for (size_t i = 0; i < playerHand.size(); i++) {
+            cout << playerHand[i].getRank() << " " << playerHand[i].getSuit();
+            if (i < playerHand.size() - 1) cout << ", ";
+        }
+        cout << " ---" << endl;
+        return;
+    }
+    
+    // Оцениваем руку
+    HandEvaluation evaluation = HandEvaluator::evaluateHand(fullHand);
+    
+    cout << "\n--- Ваши возможные комбинации ---" << endl;
+    cout << "Текущая лучшая комбинация: " << evaluation.handName << endl;
+    cout << "Сила руки: " << evaluation.rankValue << "/9" << endl;
+    
+    if (!evaluation.kickers.empty()) {
+        cout << "Кикеры: ";
+        for (size_t i = 0; i < evaluation.kickers.size() && i < 3; i++) {
+            cout << evaluation.kickers[i];
+            if (i < evaluation.kickers.size() - 1 && i < 2) cout << ", ";
+        }
+        cout << endl;
     }
 }
 
