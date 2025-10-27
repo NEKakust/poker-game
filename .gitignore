@@ -5,3 +5,30 @@
 *.swp
 .vscode/
 .idea/
+
+# CMake build directories
+out/
+cmake-build-debug/
+cmake-build-release/
+
+# Visual Studio files
+.vs/
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.sln
+
+# Build artifacts
+*.obj
+*.ilk
+*.pdb
+*.idb
+*.exp
+*.lib
+
+# CMake generated files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+build.ninja
+rules.ninja
