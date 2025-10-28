@@ -12,10 +12,11 @@
 
 #include "Player.h"
 #include "BotPlayer.h"
-#include "PokerGame.h"
+#include "Deck.h"
 #include "StateManager.h"
 #include "Wallet.h"
 #include "HandEvaluator.h"
+#include "GameBoard.h"
 
 using namespace std;
 

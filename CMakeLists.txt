@@ -14,7 +14,6 @@ set(SOURCES
     poker/Player.cpp
     poker/Card.cpp
     poker/Deck.cpp
-    poker/PokerGame.cpp
     poker/Bank.cpp
     poker/BetHistory.cpp
     poker/BotPlayer.cpp
@@ -30,7 +29,6 @@ set(HEADERS
     poker/Player.h
     poker/Card.h
     poker/Deck.h
-    poker/PokerGame.h
     poker/Bank.h
     poker/BetHistory.h
     poker/BotPlayer.h

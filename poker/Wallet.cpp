@@ -14,14 +14,14 @@ Wallet::Wallet(const std::string& owner, int initialBalance)
     : balance(initialBalance), ownerName(owner), filename("wallet.txt"), 
       autoSave(false), maxBalance(100000), minBalance(0) {
     transactionHistory.clear();
-    addTransaction(TransactionType::DEPOSIT, initialBalance, "Initial balance");
+    addTransaction(TransactionType::DEPOSIT, initialBalance, "Начальный баланс");
 }
 
 Wallet::Wallet(const std::string& owner, int initialBalance, const std::string& file) 
     : balance(initialBalance), ownerName(owner), filename(file), 
       autoSave(false), maxBalance(100000), minBalance(0) {
     transactionHistory.clear();
-    addTransaction(TransactionType::DEPOSIT, initialBalance, "Initial balance");
+    addTransaction(TransactionType::DEPOSIT, initialBalance, "Начальный баланс");
 }
 
 bool Wallet::deposit(int amount, const std::string& description) {
@@ -417,7 +417,7 @@ void Wallet::displayTransactionHistory() const {
 }
 
 void Wallet::displayRecentTransactions(int count) const {
-    std::cout << "\n=== RECENT TRANSACTIONS ===" << std::endl;
+    std::cout << "\n=== НЕДАВНИЕ ТРАНЗАКЦИИ ===" << std::endl;
     auto recent = getRecentTransactions(count);
     for (const auto& transaction : recent) {
         std::cout << getTransactionTypeString(transaction.type) << ": $" << transaction.amount;
